@@ -88,6 +88,5 @@ pluckSeq (ChangeNotification obj) = obj.lastSeq
 consumeLog :: forall a. (Show a) => Consumer a (Aff (console :: CONSOLE | _)) Error
 consumeLog = consumer \s -> liftEff (log $ show s) $> Nothing
 
--- i should have got an error with bad url
 main :: _
 main = launchAff $ runProcess (produceSeq getChangeNotification pluckSeq 0 $$ consumeLog)
