@@ -4,20 +4,22 @@ import Control.Bind ((=<<))
 import Control.Coroutine (Producer, transform, ($~))
 import Control.Coroutine.Aff.Seq (produceSeq)
 import Control.Monad.Aff (Aff)
-import Control.Monad.Rec.Class (forever)
 import Control.Monad.Aff.AVar (AVAR)
+import Control.Monad.Aff.Free (class Affable, fromAff)
 import Control.Monad.Eff.Exception (error)
 import Control.Monad.Error.Class (throwError)
+import Control.Monad.Rec.Class (class MonadRec, forever)
+import Control.Parallel.Class (class MonadPar)
 import Data.Argonaut ((.?))
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
-import Data.Functor (($>))
 import Data.Array (head, catMaybes)
-import Data.Maybe (Maybe(..))
 import Data.Either (either)
-import Data.Traversable (sequence)
-import Network.HTTP.Affjax (AJAX, get)
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Functor (($>))
 import Data.Generic (class Generic, gShow)
+import Data.Maybe (Maybe(..))
+import Data.Traversable (sequence)
+import Data.Tuple (Tuple(..), fst, snd)
+import Network.HTTP.Affjax (AJAX, get)
 import Prelude
 
 newtype ChangeNotification =
@@ -120,7 +122,7 @@ getDecodeJson uri = (decode <<< _.response) =<< get uri
   where
   decode = (either (throwError <<< error) pure) <<< decodeJson
 
-getChangeNotification :: forall a eff. (DecodeJson a) => String -> Int -> Aff (ajax :: AJAX | eff) a
+getChangeNotification :: forall eff. String -> Int -> Aff (ajax :: AJAX | eff) ChangeNotification
 getChangeNotification dbUri = getDecodeJson <<< changeNotificationUri dbUri
 
 toChangeNotificationWithDocs :: forall a eff. (DecodeJson a) => String -> ChangeNotification -> Aff (ajax :: AJAX | eff) (Tuple ChangeNotification (Array a))
@@ -129,8 +131,8 @@ toChangeNotificationWithDocs dbUri changeNotification = Tuple changeNotification
 getChangeNotificationWithDocs :: forall a eff. (DecodeJson a) => String -> Int -> Aff (ajax :: AJAX | eff) (Tuple ChangeNotification (Array a))
 getChangeNotificationWithDocs dbUri = toChangeNotificationWithDocs dbUri <=< getChangeNotification dbUri
 
-produceChangeNotifications :: forall eff. String -> Int -> Producer ChangeNotification (Aff (avar :: AVAR, ajax :: AJAX | eff)) Unit
+produceChangeNotifications :: forall m eff. (Affable (avar :: AVAR, ajax :: AJAX | eff) m, Functor m) => String -> Int -> Producer ChangeNotification m Unit
 produceChangeNotifications dbUri = produceSeq (getChangeNotification dbUri) (pluckSeq)
 
-produceChangedDocs :: forall a eff. (DecodeJson a) => String -> Int -> Producer (Array a) (Aff (avar :: AVAR, ajax :: AJAX | eff)) Unit
-produceChangedDocs dbUri seq = produceSeq (getChangeNotificationWithDocs dbUri) (pluckSeq <<< fst) seq $~ forever (transform snd)
+produceChangedDocs :: forall a m eff. (DecodeJson a, Affable (avar :: AVAR | eff) m, Functor m, MonadRec m, MonadPar m) => String -> Int -> Producer (Array a) m Unit
+produceChangedDocs dbUri seq = produceSeq (fromAff <<< getChangeNotificationWithDocs dbUri) (pluckSeq <<< fst) seq $~ forever (transform snd)
