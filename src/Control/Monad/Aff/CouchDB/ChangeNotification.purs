@@ -6,7 +6,7 @@ import Control.Coroutine.Aff.Seq (produceSeq)
 import Control.Monad.Aff (Aff)
 import Control.Monad.Rec.Class (forever)
 import Control.Monad.Aff.AVar (AVAR)
-import Control.Monad.Eff.Exception (Error, error)
+import Control.Monad.Eff.Exception (error)
 import Control.Monad.Error.Class (throwError)
 import Data.Argonaut ((.?))
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
@@ -129,8 +129,8 @@ toChangeNotificationWithDocs dbUri changeNotification = Tuple changeNotification
 getChangeNotificationWithDocs :: forall a eff. (DecodeJson a) => String -> Int -> Aff (ajax :: AJAX | eff) (Tuple ChangeNotification (Array a))
 getChangeNotificationWithDocs dbUri = toChangeNotificationWithDocs dbUri <=< getChangeNotification dbUri
 
-produceChangeNotifications :: forall eff. String -> Int -> Producer ChangeNotification (Aff (avar :: AVAR, ajax :: AJAX | eff)) Error
+produceChangeNotifications :: forall eff. String -> Int -> Producer ChangeNotification (Aff (avar :: AVAR, ajax :: AJAX | eff)) Unit
 produceChangeNotifications dbUri = produceSeq (getChangeNotification dbUri) (pluckSeq)
 
-produceChangedDocs :: forall a eff. (DecodeJson a) => String -> Int -> Producer (Array a) (Aff (avar :: AVAR, ajax :: AJAX | eff)) Error
+produceChangedDocs :: forall a eff. (DecodeJson a) => String -> Int -> Producer (Array a) (Aff (avar :: AVAR, ajax :: AJAX | eff)) Unit
 produceChangedDocs dbUri seq = produceSeq (getChangeNotificationWithDocs dbUri) (pluckSeq <<< fst) seq $~ forever (transform snd)

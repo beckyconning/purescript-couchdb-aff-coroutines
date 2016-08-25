@@ -8,7 +8,7 @@ import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Control.Monad.Aff.CouchDB.ChangeNotification (produceChangedDocs)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Exception (EXCEPTION, Error)
+import Control.Monad.Eff.Exception (EXCEPTION)
 import Control.Monad.Eff.Console (CONSOLE, log)
 import Data.Generic (class Generic, gShow)
 import Data.Argonaut ((.?))
@@ -42,10 +42,10 @@ instance showPreserve :: Show Preserve where
 exampleDbUri :: String
 exampleDbUri = "http://127.0.0.1:5984/preserves"
 
-consumeLog :: forall a eff. (Show a) => Consumer a (Aff (console :: CONSOLE | eff)) Error
+consumeLog :: forall a eff. (Show a) => Consumer a (Aff (console :: CONSOLE | eff)) Unit
 consumeLog = consumer \s -> liftEff (log $ show s) $> Nothing
 
-produceChangedPreserves :: forall eff. Producer (Array Preserve) (Aff (avar :: AVAR, ajax :: AJAX | eff)) Error
+produceChangedPreserves :: forall eff. Producer (Array Preserve) (Aff (avar :: AVAR, ajax :: AJAX | eff)) Unit
 produceChangedPreserves = produceChangedDocs exampleDbUri 0
 
 main :: forall eff. Eff (err :: EXCEPTION, avar :: AVAR, console :: CONSOLE, ajax :: AJAX | eff) Unit

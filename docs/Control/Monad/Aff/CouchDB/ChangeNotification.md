@@ -141,13 +141,13 @@ getChangeNotificationWithDocs :: forall a eff. DecodeJson a => String -> Int -> 
 #### `produceChangeNotifications`
 
 ``` purescript
-produceChangeNotifications :: forall eff. String -> Int -> Producer ChangeNotification (Aff (avar :: AVAR, ajax :: AJAX | eff)) Error
+produceChangeNotifications :: forall eff. String -> Int -> Producer ChangeNotification (Aff (avar :: AVAR, ajax :: AJAX | eff)) Unit
 ```
 
 #### `produceChangedDocs`
 
 ``` purescript
-produceChangedDocs :: forall a eff. DecodeJson a => String -> Int -> Producer (Array a) (Aff (avar :: AVAR, ajax :: AJAX | eff)) Error
+produceChangedDocs :: forall a eff. DecodeJson a => String -> Int -> Producer (Array a) (Aff (avar :: AVAR, ajax :: AJAX | eff)) Unit
 ```
 
 

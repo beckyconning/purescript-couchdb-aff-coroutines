@@ -11,7 +11,7 @@
     "output"
   ],
   "dependencies": {
-    "purescript-sequential-aff-coroutines": "^2.0.0",
+    "purescript-sequential-aff-coroutines": "^3.0.0",
     "purescript-console": "^1.0.0",
     "purescript-argonaut-core": "^1.1.0",
     "purescript-argonaut-codecs": "^1.1.0",
